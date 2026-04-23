@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Summer Money Adventure — Junior Wealth Lab</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #ddeef5; }
+  input, button { font-family: system-ui, -apple-system, sans-serif; }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const C = {
+  bg:"#ddeef5",teal:"#7ec8be",tealDark:"#4aaa9e",lavender:"#b8aad4",
+  lavLight:"#e2ddf0",lavBorder:"#c4b8df",coralBg:"#fde0d8",coralText:"#c0624a",
+  coralBorder:"#f0b8a8",navy:"#2d2d44",mid:"#5a5a72",cardBg:"#eef6fa",
+  white:"#ffffff",yellow:"#f5c842",green:"#5bba6f"
+};
+
+const questions=[
+  {q:"You get £10 for your birthday 🎉 What's your first instinct?",emoji:"🎂",options:[
+    {text:"Spend it today — treat yourself!",type:"spender"},
+    {text:"Pop it straight in my money jar",type:"saver"},
+    {text:"Split it — save half, spend half",type:"balanced"},
+    {text:"Ask how to make it grow into more",type:"investor"}]},
+  {q:"At a car boot sale you find something for £1. You have £3. What do you do?",emoji:"🛍️",options:[
+    {text:"Buy it! It's only £1",type:"spender"},
+    {text:"Walk away — I'm saving up",type:"saver"},
+    {text:"Haggle for 50p so I keep more",type:"investor"},
+    {text:"Buy it and set a new savings goal",type:"balanced"}]},
+  {q:"Your friend asks to borrow £2. What do you say?",emoji:"🤝",options:[
+    {text:"Sure! Friends help each other",type:"spender"},
+    {text:"Sorry, I'm saving it",type:"saver"},
+    {text:"Yes — but pay me back by Friday!",type:"investor"},
+    {text:"Yes — I'll note it down so we both remember",type:"balanced"}]},
+  {q:"You want a toy that costs £15. You have £8. What's your plan?",emoji:"🧸",options:[
+    {text:"Ask for the rest as an advance",type:"spender"},
+    {text:"Save up the £7 over the next few weeks",type:"saver"},
+    {text:"Do extra chores to earn it faster",type:"investor"},
+    {text:"Wait for a sale or find a cheaper version",type:"balanced"}]}
+];
+
+const results={
+  spender:{emoji:"🎉",type:"The Joyful Spender",desc:"You love enjoying money in the moment! That's fun — but learning when to pause before spending will make your money go even further.",tip:"Try the 24-hour rule: wait a day before any non-essential purchase."},
+  saver:{emoji:"🏦",type:"The Super Saver",desc:"You're brilliant at holding on to money! You'll always have a safety net. The next step? Put your savings to work with a goal.",tip:"Pick one thing you're saving towards and track your progress — it makes saving exciting!"},
+  balanced:{emoji:"⚖️",type:"The Wise Balancer",desc:"You think before you act and like to keep things fair. You're great at finding the middle ground — a really powerful money skill!",tip:"Try a Save / Spend / Share jar system to level up your balance."},
+  investor:{emoji:"🚀",type:"The Mini Investor",desc:"You're always thinking about how to make your money do MORE. That entrepreneurial mindset is amazing — keep nurturing it!",tip:"Look into how compound interest works — even small amounts grow big over time."}
+};
+
+const nwData=[
+  {label:"🍞 Food",answer:"need"},{label:"🎮 Video game",answer:"want"},
+  {label:"💊 Medicine",answer:"need"},{label:"👟 Designer trainers",answer:"want"},
+  {label:"🏠 Shelter",answer:"need"},{label:"🍫 Chocolate",answer:"want"},
+  {label:"🚿 Water",answer:"need"},{label:"📱 New phone",answer:"want"},
+  {label:"🧥 Winter coat",answer:"need"},{label:"🎡 Theme park",answer:"want"}
+];
+
+const SL=({children})=><div style={{fontSize:11,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",color:C.mid,marginBottom:16}}>{children}</div>;
+const Btn=({children,onClick,color=C.tealDark,outline=false,style={}})=>(
+  <button onClick={onClick} style={{display:"block",width:"100%",padding:"14px 16px",borderRadius:14,border:outline?`2px solid ${C.lavBorder}`:"none",background:outline?"transparent":color,color:outline?C.mid:C.white,fontSize:14,fontWeight:800,cursor:"pointer",marginBottom:10,...style}}>{children}</button>
+);
+const WhyRow=({children})=>(
+  <div style={{display:"flex",gap:10,marginTop:10}}>
+    <div style={{width:4,borderRadius:2,background:C.tealDark,minHeight:36,flexShrink:0}}/>
+    <div style={{fontSize:13,color:C.mid,lineHeight:1.6}}>{children}</div>
+  </div>
+);
+const Doodles=()=>(
+  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0}}>
+    {[{s:110,c:C.teal,top:-20,left:-20},{s:80,c:C.teal,bottom:60,left:10},{s:90,c:C.teal,top:220,left:-30},
+      {s:100,c:C.lavender,top:80,right:-15},{s:70,c:C.lavender,bottom:30,right:20},{s:60,c:C.lavender,top:420,right:-10}
+    ].map((d,i)=>(
+      <div key={i} style={{position:"absolute",width:d.s,height:d.s,borderRadius:"50%",border:`3px solid ${d.c}`,opacity:0.3,top:d.top,left:d.left,right:d.right,bottom:d.bottom,boxShadow:`0 0 0 ${d.s*.15}px ${d.c}22,0 0 0 ${d.s*.3}px ${d.c}11`}}/>
+    ))}
+  </div>
+);
+
+const Welcome=({go})=>(
+  <div>
+    <SL>Free Starter Kit</SL>
+    <div style={{textAlign:"center",fontSize:48,marginBottom:12}}>☀️</div>
+    <div style={{fontSize:26,fontWeight:900,color:C.navy,textAlign:"center",lineHeight:1.2,marginBottom:10}}>Summer Money Adventure</div>
+    <p style={{color:C.mid,textAlign:"center",fontSize:14,lineHeight:1.7,marginBottom:24}}>Four fun activities to kick-start your child's money journey this summer. Tap any section below!</p>
+    {[{icon:"💡",title:"Money Personality Quiz",sub:"What kind of money thinker are you?",s:"quiz"},
+      {icon:"🎯",title:"Savings Goal Tracker",sub:"Set a goal and watch it grow",s:"tracker"},
+      {icon:"🛒",title:"Needs vs Wants",sub:"Sort it out — can you get them all right?",s:"nw"},
+      {icon:"📖",title:"Book Preview",sub:"A sneak peek from My Money Adventure!",s:"chapter"}
+    ].map(item=>(
+      <div key={item.s} onClick={()=>go(item.s)} style={{display:"flex",alignItems:"center",gap:14,background:C.white,borderRadius:16,padding:"14px 18px",border:`2px solid ${C.lavLight}`,cursor:"pointer",marginBottom:10}}>
+        <div style={{fontSize:26}}>{item.icon}</div>
+        <div>
+          <div style={{fontWeight:700,color:C.navy,fontSize:14}}>{item.title}</div>
+          <div style={{fontSize:12,color:C.mid,fontWeight:600}}>{item.sub}</div>
+        </div>
+      </div>
+    ))}
+    <Btn onClick={()=>go("quiz")} style={{marginTop:8}}>Start the Adventure →</Btn>
+  </div>
+);
+
+const Quiz=({go})=>{
+  const [curr,setCurr]=useState(0);
+  const [answers,setAnswers]=useState([]);
+  const [selected,setSelected]=useState(null);
+  const [result,setResult]=useState(null);
+  const pick=(type)=>{
+    setSelected(type);
+    setTimeout(()=>{
+      const next=[...answers,type];
+      if(curr+1>=questions.length){
+        const counts={};next.forEach(a=>counts[a]=(counts[a]||0)+1);
+        const top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+        setResult(top);
+      }else{setAnswers(next);setCurr(curr+1);setSelected(null);}
+    },450);
+  };
+  const reset=()=>{setCurr(0);setAnswers([]);setSelected(null);setResult(null);};
+  if(result){
+    const r=results[result];
+    return(
+      <div>
+        <SL>Your Result</SL>
+        <div style={{textAlign:"center",fontSize:48,marginBottom:10}}>{r.emoji}</div>
+        <div style={{fontSize:22,fontWeight:900,color:C.navy,textAlign:"center",marginBottom:14}}>{r.type}</div>
+        <div style={{background:C.lavLight,borderLeft:`4px solid ${C.lavender}`,borderRadius:14,padding:"14px 16px",fontSize:14,color:C.navy,lineHeight:1.65,marginBottom:14}}>{r.desc}</div>
+        <div style={{fontSize:11,fontWeight:800,color:C.tealDark,letterSpacing:1.5,marginBottom:4}}>💡 YOUR MONEY TIP</div>
+        <div style={{fontSize:13,color:C.mid,lineHeight:1.6,marginBottom:20}}>{r.tip}</div>
+        <Btn onClick={reset}>Take Quiz Again</Btn>
+        <Btn onClick={()=>go("tracker")} outline>Next: Savings Tracker →</Btn>
+      </div>
+    );
+  }
+  const q=questions[curr];
+  return(
+    <div>
+      <SL>Quiz 0{curr+1}</SL>
+      <div style={{display:"flex",gap:6,marginBottom:20}}>
+        {questions.map((_,i)=><div key={i} style={{height:6,flex:1,borderRadius:3,background:i<curr?C.lavender:i===curr?C.tealDark:C.lavLight,transition:"background 0.3s"}}/>)}
+      </div>
+      <div style={{fontSize:36,marginBottom:12}}>{q.emoji}</div>
+      <div style={{fontSize:18,fontWeight:900,color:C.navy,marginBottom:18,lineHeight:1.35}}>{q.q}</div>
+      {q.options.map((o,i)=>(
+        <button key={i} onClick={()=>pick(o.type)} style={{display:"block",width:"100%",padding:"13px 16px",borderRadius:13,border:`2px solid ${selected===o.type?C.tealDark:C.lavLight}`,background:selected===o.type?"rgba(126,200,190,0.15)":C.white,fontSize:14,fontWeight:700,color:C.navy,cursor:"pointer",textAlign:"left",marginBottom:10}}>{o.text}</button>
+      ))}
+    </div>
+  );
+};
+
+const Tracker=()=>{
+  const [goalName,setGoalName]=useState("");
+  const [target,setTarget]=useState("");
+  const [saved,setSaved]=useState("");
+  const [coins,setCoins]=useState(Array(20).fill(false));
+  const pct=target>0?Math.min(100,Math.round((parseFloat(saved)/parseFloat(target))*100)):0;
+  const toggleCoin=i=>{const n=[...coins];n[i]=!n[i];setCoins(n);};
+  return(
+    <div>
+      <SL>Savings Tracker</SL>
+      <div style={{background:C.white,borderRadius:16,padding:18,border:`2px solid ${C.lavLight}`,marginBottom:16}}>
+        <div style={{fontSize:11,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:C.mid,marginBottom:8}}>My goal is to save for</div>
+        <input value={goalName} onChange={e=>setGoalName(e.target.value)} placeholder="e.g. New bike, summer trip…" style={{width:"100%",border:"none",background:"transparent",fontSize:15,fontWeight:700,color:C.navy,outline:"none",borderBottom:`2px dashed ${C.lavBorder}`,paddingBottom:4}}/>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+        {[{label:"Target amount",val:target,set:setTarget,ph:"£ 0"},{label:"Saved so far",val:saved,set:setSaved,ph:"£ 0"}].map(f=>(
+          <div key={f.label} style={{background:C.white,borderRadius:16,padding:16,border:`2px solid ${C.lavLight}`}}>
+            <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:C.mid,marginBottom:8}}>{f.label}</div>
+            <input type="number" value={f.val} onChange={e=>f.set(e.target.value)} placeholder={f.ph} style={{width:"100%",border:"none",background:"transparent",fontSize:15,fontWeight:700,color:C.navy,outline:"none",borderBottom:`2px dashed ${C.lavBorder}`,paddingBottom:4}}/>
+          </div>
+        ))}
+      </div>
+      <div style={{background:C.lavLight,borderRadius:20,height:20,overflow:"hidden",marginBottom:6}}>
+        <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${C.teal},${C.tealDark})`,borderRadius:20,transition:"width 0.5s ease"}}/>
+      </div>
+      <div style={{fontSize:12,fontWeight:800,color:C.mid,textAlign:"right",marginBottom:20}}>{pct}% saved</div>
+      <div style={{fontSize:11,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:C.mid,marginBottom:10}}>Tap to fill your coin jar 🪙</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
+        {coins.map((filled,i)=>(
+          <div key={i} onClick={()=>toggleCoin(i)} style={{width:40,height:40,borderRadius:"50%",background:filled?C.yellow:C.lavLight,border:`2px ${filled?"solid #d4a92a":`dashed ${C.lavBorder}`}`,fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all 0.2s"}}>{filled?"🪙":""}</div>
+        ))}
+      </div>
+      <WhyRow><strong style={{color:C.tealDark}}>Why:</strong> Seeing your progress makes saving feel real — and exciting!</WhyRow>
+    </div>
+  );
+};
+
+const NeedsWants=()=>{
+  const [placements,setPlacements]=useState({});
+  const [feedback,setFeedback]=useState(null);
+  const cycle=i=>{const cur=placements[i]||"pool";const next=cur==="pool"?"need":cur==="need"?"want":"pool";setPlacements(p=>({...p,[i]:next}));setFeedback(null);};
+  const check=()=>{
+    const placed=nwData.filter((_,i)=>placements[i]&&placements[i]!=="pool");
+    if(placed.length<nwData.length){setFeedback({type:"partial",msg:`You've sorted ${placed.length} of ${nwData.length} items. Tap each one to sort them all!`});return;}
+    const correct=nwData.filter((item,i)=>placements[i]===item.answer).length;
+    setFeedback(correct===nwData.length
+      ?{type:"correct",msg:`🎉 Perfect! All ${nwData.length} correct! You really know your needs from your wants.`}
+      :{type:"partial",msg:`Nice try! ${correct} of ${nwData.length} correct. Remember: Needs = must have to survive. Try again!`}
+    );
+  };
+  const needs=nwData.filter((_,i)=>placements[i]==="need");
+  const wants=nwData.filter((_,i)=>placements[i]==="want");
+  return(
+    <div>
+      <SL>Activity 03</SL>
+      <p style={{color:C.mid,fontSize:13,lineHeight:1.65,marginBottom:16}}>Tap each item to sort it — <strong>Need</strong> (must have) or <strong>Want</strong> (nice to have). Tap again to cycle.</p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
+        {nwData.map((item,i)=>{const p=placements[i]||"pool";return(
+          <div key={i} onClick={()=>cycle(i)} style={{padding:"8px 14px",borderRadius:30,fontSize:13,fontWeight:700,cursor:"pointer",background:p==="need"?"rgba(126,200,190,0.25)":p==="want"?C.lavLight:C.white,border:`2px solid ${p==="need"?C.tealDark:p==="want"?C.lavender:C.lavLight}`,color:p==="need"?C.tealDark:p==="want"?"#7c6db5":C.navy}}>
+            {item.label} {p!=="pool"?(p==="need"?"✅":"🌟"):""}
+          </div>
+        );})}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+        {[{label:"✅ Needs",items:needs,color:C.teal,bg:"rgba(126,200,190,0.15)"},{label:"🌟 Wants",items:wants,color:C.lavender,bg:C.lavLight}].map(col=>(
+          <div key={col.label} style={{borderRadius:16,padding:14,minHeight:120,background:col.bg,border:`2px dashed ${col.color}`}}>
+            <div style={{fontSize:11,fontWeight:900,letterSpacing:2,textTransform:"uppercase",color:col.color,marginBottom:10}}>{col.label}</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              {col.items.map((item,i)=><div key={i} style={{padding:"4px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:col.color,color:C.white}}>{item.label}</div>)}
+            </div>
+          </div>
+        ))}
+      </div>
+      {feedback&&<div style={{padding:"13px 16px",borderRadius:14,fontSize:13,fontWeight:700,marginBottom:14,background:feedback.type==="correct"?"rgba(126,200,190,0.2)":C.coralBg,borderLeft:`4px solid ${feedback.type==="correct"?C.tealDark:C.coralText}`,color:feedback.type==="correct"?C.tealDark:C.coralText}}>{feedback.msg}</div>}
+      <Btn onClick={check}>Check My Answers ✓</Btn>
+      <Btn onClick={()=>{setPlacements({});setFeedback(null);}} outline>Start Again</Btn>
+    </div>
+  );
+};
+
+const Chapter=({go})=>(
+  <div>
+    <div style={{display:"inline-block",background:C.coralBg,color:C.coralText,fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",padding:"4px 12px",borderRadius:20,marginBottom:12}}>📖 Book Preview</div>
+    <div style={{fontSize:20,fontWeight:900,color:C.navy,marginBottom:4,lineHeight:1.3}}>Chapter 1: What Is Money?</div>
+    <div style={{fontSize:12,color:C.mid,fontWeight:600,marginBottom:18}}>From My Money Adventure! by Junior Wealth Lab</div>
+    <div style={{background:C.white,borderRadius:16,padding:18,border:`2px solid ${C.lavLight}`,fontSize:14,color:C.navy,lineHeight:1.8,marginBottom:14}}>
+      Meet <strong style={{color:C.tealDark}}>Maya</strong>. Every Saturday, Maya gets £2 pocket money from her mum.<br/><br/>
+      One week, she spent it straight away on sweets. The next week, she saved it. By week four, she had £8 — enough for the art set she'd been dreaming about! 🎨<br/><br/>
+      <em>"Money is like a superpower,"</em> her mum said. <em>"But you have to learn how to use it."</em>
+    </div>
+    <div style={{background:C.coralBg,border:`2px solid ${C.coralBorder}`,borderRadius:16,padding:"14px 16px",marginBottom:10}}>
+      <div style={{fontSize:10,fontWeight:900,letterSpacing:2,textTransform:"uppercase",color:C.coralText,marginBottom:6}}>❌ Common Myth</div>
+      <div style={{fontSize:14,fontWeight:700,color:C.coralText,textDecoration:"line-through"}}>Money is only for grown-ups to worry about.</div>
+    </div>
+    <div style={{textAlign:"center",color:C.mid,fontSize:18,marginBottom:10}}>↓</div>
+    <div style={{background:C.lavLight,border:`2px solid ${C.lavBorder}`,borderRadius:16,padding:"14px 16px",marginBottom:14}}>
+      <div style={{fontSize:10,fontWeight:900,letterSpacing:2,textTransform:"uppercase",color:C.mid,marginBottom:6}}>✅ The Truth</div>
+      <div style={{fontSize:15,fontWeight:800,color:C.navy,lineHeight:1.5}}>The earlier you learn about money, the better your choices become — at any age!</div>
+    </div>
+    <WhyRow><strong style={{color:C.tealDark}}>Why this matters:</strong> Teaching kids about money early builds confidence, not anxiety.</WhyRow>
+    <div style={{background:"rgba(126,200,190,0.12)",border:`2px dashed ${C.teal}`,borderRadius:14,padding:16,margin:"16px 0"}}>
+      <div style={{fontSize:10,fontWeight:900,letterSpacing:2,textTransform:"uppercase",color:C.tealDark,marginBottom:8}}>🧠 Try It</div>
+      <div style={{fontSize:14,fontWeight:700,color:C.navy,marginBottom:10}}>If you had £5 right now, what would you do with it?</div>
+      <input type="text" placeholder="Write your answer here…" style={{width:"100%",border:`2px solid ${C.teal}`,borderRadius:10,padding:"10px 12px",fontSize:13,color:C.navy,background:C.white,outline:"none"}}/>
+    </div>
+    <Btn onClick={()=>go("welcome")} color={C.lavender}>← Back to Kit</Btn>
+  </div>
+);
+
+const tabs=[{id:"welcome",label:"🏠 Home"},{id:"quiz",label:"💡 Quiz"},{id:"tracker",label:"🎯 Tracker"},{id:"nw",label:"🛒 Needs vs Wants"},{id:"chapter",label:"📖 Preview"}];
+
+function App(){
+  const [screen,setScreen]=useState("welcome");
+  return(
+    <div style={{background:C.bg,minHeight:"100vh",position:"relative"}}>
+      <Doodles/>
+      <div style={{position:"relative",zIndex:1,maxWidth:560,margin:"0 auto",padding:"0 16px 40px"}}>
+        <div style={{textAlign:"center",padding:"20px 0 10px",fontSize:15,fontWeight:800,color:C.navy}}>Junior Wealth Lab</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center",marginBottom:16}}>
+          {tabs.map(t=>(
+            <button key={t.id} onClick={()=>setScreen(t.id)} style={{padding:"8px 14px",borderRadius:30,border:`2px solid ${screen===t.id?C.lavender:C.lavBorder}`,background:screen===t.id?C.lavender:C.white,color:screen===t.id?C.white:C.mid,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div style={{background:C.cardBg,borderRadius:28,padding:"28px 24px",boxShadow:"0 4px 24px rgba(45,45,68,0.09)"}}>
+          {screen==="welcome"&&<Welcome go={setScreen}/>}
+          {screen==="quiz"&&<Quiz go={setScreen}/>}
+          {screen==="tracker"&&<Tracker/>}
+          {screen==="nw"&&<NeedsWants/>}
+          {screen==="chapter"&&<Chapter go={setScreen}/>}
+        </div>
+        <div style={{textAlign:"center",padding:"16px 0 6px",fontSize:14,fontWeight:800,color:C.navy}}>Junior Wealth Lab</div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
